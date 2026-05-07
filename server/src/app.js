@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import testRoutes from "./routes/test.routes.js";
 
 const app = express();
 
@@ -20,5 +21,7 @@ app.get("/api/health", (req, res) => {
     message: "Booking API is running"
   });
 });
+
+app.use("/api/test", testRoutes);
 
 export default app;
