@@ -154,3 +154,92 @@ export const cancelMyBooking = async (req, res) => {
     });
   }
 };
+
+export const getAllBookings = async (req, res) => {
+  try {
+    const { status, date } = req.query;
+
+    const filter = {};
+
+    if (status) {
+      filter.status = status;
+    }
+
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const slots = await Slot.find({
+        startTime: {
+          $gte: startOfDay,
+          $lte: endOfDay
+        }
+      }).select("_id");
+
+      filter.slot = {
+        $in: slots.map((slot) => slot._id)
+      };
+    }
+
+    const bookings = await Booking.find(filter)
+      .populate("user", "name email")
+      .populate("slot")
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      count: bookings.length,
+      bookings
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to fetch bookings."
+    });
+  }
+};
+
+export const cancelBookingByAdmin = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const booking = await Booking.findById(id).populate("slot");
+
+    if (!booking) {
+      return res.status(404).json({
+        success: false,
+        message: "Booking not found."
+      });
+    }
+
+    if (booking.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "Booking is already cancelled."
+      });
+    }
+
+    booking.status = "cancelled";
+    booking.cancelledAt = new Date();
+    await booking.save();
+
+    if (booking.slot && booking.slot.status === "booked") {
+      booking.slot.status = "available";
+      await booking.slot.save();
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Booking cancelled by admin.",
+      booking
+    });
+  } catch (error) {
+    return res.status(500).json({
+      success: false,
+      message: "Failed to cancel booking."
+    });
+  }
+};
