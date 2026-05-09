@@ -1,4 +1,5 @@
 import Slot from "../models/slot.model.js";
+import { validateDateRange } from "../utils/validateDateRange.js";
 
 export const createSlot = async (req, res) => {
   try {
@@ -7,44 +8,44 @@ export const createSlot = async (req, res) => {
     if (!serviceName || !startTime || !endTime) {
       return res.status(400).json({
         success: false,
-        message: "Service name, start time, and end time are required."
+        message: "Service name, start time, and end time are required.",
       });
     }
 
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const now = new Date();
+    const validation = validateDateRange(startTime, endTime);
 
-    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
+    if (!validation.isValid) {
       return res.status(400).json({
         success: false,
-        message: "Invalid date format."
+        message: validation.message,
       });
     }
+
+    const { start, end } = validation;
 
     if (start <= now) {
       return res.status(400).json({
         success: false,
-        message: "Slot start time must be in the future."
+        message: "Slot start time must be in the future.",
       });
     }
 
     if (end <= start) {
       return res.status(400).json({
         success: false,
-        message: "End time must be after start time."
+        message: "End time must be after start time.",
       });
     }
 
     const existingSlot = await Slot.findOne({
       startTime: start,
-      endTime: end
+      endTime: end,
     });
 
     if (existingSlot) {
       return res.status(409).json({
         success: false,
-        message: "A slot already exists for this time."
+        message: "A slot already exists for this time.",
       });
     }
 
@@ -52,18 +53,18 @@ export const createSlot = async (req, res) => {
       serviceName,
       startTime: start,
       endTime: end,
-      createdBy: req.user._id
+      createdBy: req.user._id,
     });
 
     return res.status(201).json({
       success: true,
       message: "Slot created successfully.",
-      slot
+      slot,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to create slot."
+      message: "Failed to create slot.",
     });
   }
 };
@@ -87,7 +88,7 @@ export const getSlots = async (req, res) => {
 
       filter.startTime = {
         $gte: startOfDay,
-        $lte: endOfDay
+        $lte: endOfDay,
       };
     }
 
@@ -96,16 +97,15 @@ export const getSlots = async (req, res) => {
     return res.status(200).json({
       success: true,
       count: slots.length,
-      slots
+      slots,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to fetch slots."
+      message: "Failed to fetch slots.",
     });
   }
 };
-
 
 export const updateSlot = async (req, res) => {
   try {
@@ -117,44 +117,32 @@ export const updateSlot = async (req, res) => {
     if (!slot) {
       return res.status(404).json({
         success: false,
-        message: "Slot not found."
+        message: "Slot not found.",
       });
     }
 
     if (slot.status === "booked") {
       return res.status(400).json({
         success: false,
-        message: "You cannot update a booked slot."
+        message: "You cannot update a booked slot.",
       });
     }
 
     if (startTime || endTime) {
-      const newStart = startTime ? new Date(startTime) : slot.startTime;
-      const newEnd = endTime ? new Date(endTime) : slot.endTime;
+      const newStartTime = startTime || slot.startTime;
+      const newEndTime = endTime || slot.endTime;
 
-      if (Number.isNaN(newStart.getTime()) || Number.isNaN(newEnd.getTime())) {
+      const validation = validateDateRange(newStartTime, newEndTime);
+
+      if (!validation.isValid) {
         return res.status(400).json({
           success: false,
-          message: "Invalid date format."
+          message: validation.message,
         });
       }
 
-      if (newStart <= new Date()) {
-        return res.status(400).json({
-          success: false,
-          message: "Slot start time must be in the future."
-        });
-      }
-
-      if (newEnd <= newStart) {
-        return res.status(400).json({
-          success: false,
-          message: "End time must be after start time."
-        });
-      }
-
-      slot.startTime = newStart;
-      slot.endTime = newEnd;
+      slot.startTime = validation.start;
+      slot.endTime = validation.end;
     }
 
     if (serviceName) {
@@ -166,23 +154,22 @@ export const updateSlot = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Slot updated successfully.",
-      slot
+      slot,
     });
   } catch (error) {
     if (error.code === 11000) {
       return res.status(409).json({
         success: false,
-        message: "A slot already exists for this time."
+        message: "A slot already exists for this time.",
       });
     }
 
     return res.status(500).json({
       success: false,
-      message: "Failed to update slot."
+      message: "Failed to update slot.",
     });
   }
 };
-
 
 export const cancelSlot = async (req, res) => {
   try {
@@ -193,21 +180,21 @@ export const cancelSlot = async (req, res) => {
     if (!slot) {
       return res.status(404).json({
         success: false,
-        message: "Slot not found."
+        message: "Slot not found.",
       });
     }
 
     if (slot.status === "booked") {
       return res.status(400).json({
         success: false,
-        message: "You cannot cancel a booked slot. Cancel the booking first."
+        message: "You cannot cancel a booked slot. Cancel the booking first.",
       });
     }
 
     if (slot.status === "cancelled") {
       return res.status(400).json({
         success: false,
-        message: "Slot is already cancelled."
+        message: "Slot is already cancelled.",
       });
     }
 
@@ -217,16 +204,15 @@ export const cancelSlot = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Slot cancelled successfully.",
-      slot
+      slot,
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to cancel slot."
+      message: "Failed to cancel slot.",
     });
   }
 };
-
 
 export const deleteSlot = async (req, res) => {
   try {
@@ -237,14 +223,14 @@ export const deleteSlot = async (req, res) => {
     if (!slot) {
       return res.status(404).json({
         success: false,
-        message: "Slot not found."
+        message: "Slot not found.",
       });
     }
 
     if (slot.status === "booked") {
       return res.status(400).json({
         success: false,
-        message: "You cannot delete a booked slot."
+        message: "You cannot delete a booked slot.",
       });
     }
 
@@ -252,12 +238,12 @@ export const deleteSlot = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Slot deleted successfully."
+      message: "Slot deleted successfully.",
     });
   } catch (error) {
     return res.status(500).json({
       success: false,
-      message: "Failed to delete slot."
+      message: "Failed to delete slot.",
     });
   }
 };
