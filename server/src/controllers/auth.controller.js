@@ -1,5 +1,6 @@
 import User from "../models/user.model.js";
 import { generateToken } from "../utils/generateToken.js";
+import { googleClient } from "../utils/googleClient.js";
 
 export const registerUser = async (req, res) => {
   try {
@@ -116,4 +117,70 @@ export const getMe = async (req, res) => {
       role: req.user.role
     }
   });
+};
+
+
+export const googleAuth = async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({
+        success: false,
+        message: "Google credential is required."
+      });
+    }
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: process.env.GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+
+    const { sub, email, name, picture } = payload;
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Google account email not found."
+      });
+    }
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = await User.create({
+        name,
+        email,
+        googleId: sub,
+        authProvider: "google"
+      });
+    }
+
+    if (user.authProvider === "local" && !user.googleId) {
+      user.googleId = sub;
+      await user.save();
+    }
+
+    const token = generateToken(user._id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Google authentication successful.",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        picture
+      }
+    });
+  } catch (error) {
+    return res.status(401).json({
+      success: false,
+      message: "Invalid Google credential."
+    });
+  }
 };
