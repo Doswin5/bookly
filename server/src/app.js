@@ -9,6 +9,7 @@ import bookingRoutes from "./routes/booking.routes.js";
 
 import { notFound, errorHandler } from "./middleware/error.middleware.js";
 
+
 const app = express();
 
 app.use(
