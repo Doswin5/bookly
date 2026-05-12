@@ -1,7 +1,9 @@
+import AppLayout from "../layouts/AppLayout";
+
 export default function Slots() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-6">
+    <AppLayout>
       <h1 className="text-3xl font-bold">Available Slots</h1>
-    </main>
+    </AppLayout>
   );
 }

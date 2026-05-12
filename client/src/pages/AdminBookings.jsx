@@ -1,7 +1,9 @@
+import AppLayout from "../layouts/AppLayout";
+
 export default function AdminBookings() {
   return (
-    <main className="min-h-screen bg-slate-950 text-white p-6">
-      <h1 className="text-3xl font-bold">Available AdminBookings</h1>
-    </main>
+    <AppLayout>
+      <h1 className="text-3xl font-bold">Admin Bookings</h1>
+    </AppLayout>
   );
 }
