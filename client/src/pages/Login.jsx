@@ -34,6 +34,11 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.email || !formData.password) {
+      toast.error("Email and password are required");
+      return;
+    }
+
     try {
       setLoading(true);
 

@@ -9,23 +9,6 @@ export default function GoogleLoginButton() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  useEffect(() => {
-    if (!window.google || !buttonRef.current) return;
-
-    window.google.accounts.id.initialize({
-      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
-      callback: handleGoogleResponse
-    });
-
-    window.google.accounts.id.renderButton(buttonRef.current, {
-      theme: "outline",
-      size: "large",
-      width: 350,
-      text: "continue_with",
-      shape: "pill"
-    });
-  }, []);
-
   const handleGoogleResponse = async (response) => {
     try {
       const res = await api.post("/auth/google", {
@@ -44,6 +27,23 @@ export default function GoogleLoginButton() {
       toast.error(error.response?.data?.message || "Google login failed");
     }
   };
+
+  useEffect(() => {
+    if (!window.google || !buttonRef.current) return;
+
+    window.google.accounts.id.initialize({
+      client_id: import.meta.env.VITE_GOOGLE_CLIENT_ID,
+      callback: handleGoogleResponse
+    });
+
+    window.google.accounts.id.renderButton(buttonRef.current, {
+      theme: "outline",
+      size: "large",
+      width: 350,
+      text: "continue_with",
+      shape: "pill"
+    });
+  }, []);
 
   return <div ref={buttonRef} className="flex justify-center" />;
 }

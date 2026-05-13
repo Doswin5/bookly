@@ -40,16 +40,17 @@ export default function AdminSlots() {
   };
 
   const handleCreateSlot = async (e) => {
-    if (!formData.serviceName || !formData.startTime || !formData.endTime) {
-      toast.error("Please fill in all fields");
-      return;
-    }
-
-    if (new Date(formData.endTime) <= new Date(formData.startTime)) {
-      toast.error("End time must be after start time");
-      return;
-    }
-    e.preventDefault();
+      e.preventDefault();
+      
+      if (!formData.serviceName || !formData.startTime || !formData.endTime) {
+        toast.error("Please fill in all fields");
+        return;
+      }
+  
+      if (new Date(formData.endTime) <= new Date(formData.startTime)) {
+        toast.error("End time must be after start time");
+        return;
+      }
 
     try {
       setCreating(true);
@@ -70,7 +71,6 @@ export default function AdminSlots() {
 
       fetchSlots();
     } catch (error) {
-      console.log("CREATE SLOT ERROR:", error.response?.data || error.message);
       toast.error(error.response?.data?.message || "Failed to create slot");
     } finally {
       setCreating(false);

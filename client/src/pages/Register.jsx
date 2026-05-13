@@ -27,6 +27,16 @@ export default function Register() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (!formData.name || !formData.email || !formData.password) {
+      toast.error("Name, email, and password are required");
+      return;
+    }
+
+    if (formData.password.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+
     try {
       setLoading(true);
 
@@ -51,17 +61,16 @@ export default function Register() {
           Book appointments and manage your sessions.
         </p>
 
-
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
-        <div className="mt-8">
-          <GoogleLoginButton />
-        </div>
+          <div className="mt-8">
+            <GoogleLoginButton />
+          </div>
 
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-800" />
-          <span className="text-xs text-slate-500">OR</span>
-          <div className="h-px flex-1 bg-slate-800" />
-        </div>
+          <div className="my-6 flex items-center gap-3">
+            <div className="h-px flex-1 bg-slate-800" />
+            <span className="text-xs text-slate-500">OR</span>
+            <div className="h-px flex-1 bg-slate-800" />
+          </div>
           <div>
             <label className="text-sm text-slate-300">Name</label>
             <input
