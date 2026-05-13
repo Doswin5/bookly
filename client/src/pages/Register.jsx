@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router";
 import toast from "react-hot-toast";
 import api from "../api/axios";
 import { useAuth } from "../context/AuthContext";
+import GoogleLoginButton from "../components/GoogleLoginButton";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export default function Register() {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: ""
+    password: "",
   });
 
   const [loading, setLoading] = useState(false);
@@ -19,7 +20,7 @@ export default function Register() {
   const handleChange = (e) => {
     setFormData((prev) => ({
       ...prev,
-      [e.target.name]: e.target.value
+      [e.target.name]: e.target.value,
     }));
   };
 
@@ -50,7 +51,17 @@ export default function Register() {
           Book appointments and manage your sessions.
         </p>
 
+
         <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+        <div className="mt-8">
+          <GoogleLoginButton />
+        </div>
+
+        <div className="my-6 flex items-center gap-3">
+          <div className="h-px flex-1 bg-slate-800" />
+          <span className="text-xs text-slate-500">OR</span>
+          <div className="h-px flex-1 bg-slate-800" />
+        </div>
           <div>
             <label className="text-sm text-slate-300">Name</label>
             <input
