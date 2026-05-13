@@ -8,6 +8,7 @@ import EmptyState from "../components/EmptyState";
 import ConfirmModal from "../components/ConfirmModal";
 
 export default function AdminSlots() {
+  // States
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
