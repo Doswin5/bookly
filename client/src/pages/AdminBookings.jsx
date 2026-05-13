@@ -3,6 +3,9 @@ import toast from "react-hot-toast";
 import api from "../api/axios";
 import AppLayout from "../layouts/AppLayout";
 import { formatDateTime } from "../utils/formatDateTime";
+import LoadingState from "../components/LoadingState";
+import EmptyState from "../components/EmptyState";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function AdminBookings() {
   const [bookings, setBookings] = useState([]);
@@ -10,6 +13,7 @@ export default function AdminBookings() {
   const [date, setDate] = useState("");
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState(null);
+  const [selectedBookingId, setSelectedBookingId] = useState(null);
 
   const fetchBookings = async () => {
     try {
@@ -51,10 +55,10 @@ export default function AdminBookings() {
             ? {
                 ...booking,
                 status: "cancelled",
-                cancelledAt: new Date().toISOString()
+                cancelledAt: new Date().toISOString(),
               }
-            : booking
-        )
+            : booking,
+        ),
       );
     } catch (error) {
       toast.error(error.response?.data?.message || "Failed to cancel booking");
@@ -100,16 +104,12 @@ export default function AdminBookings() {
       </div>
 
       {loading ? (
-        <div className="mt-10 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
-          Loading bookings...
-        </div>
+        <LoadingState text="Loading bookings..." />
       ) : bookings.length === 0 ? (
-        <div className="mt-10 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
-          <h2 className="text-xl font-semibold">No bookings found</h2>
-          <p className="mt-2 text-slate-400">
-            Try changing the filters or check again later.
-          </p>
-        </div>
+        <EmptyState
+          title="No bookings found"
+          message="Try changing the filters or check again later."
+        />
       ) : (
         <div className="mt-8 space-y-4">
           {bookings.map((booking) => {
@@ -130,7 +130,7 @@ export default function AdminBookings() {
                     <p className="mt-2 text-sm text-slate-400">
                       {booking.slot
                         ? `${formatDateTime(
-                            booking.slot.startTime
+                            booking.slot.startTime,
                           )} - ${formatDateTime(booking.slot.endTime)}`
                         : "Slot details unavailable"}
                     </p>
@@ -167,15 +167,15 @@ export default function AdminBookings() {
                     </span>
 
                     <button
-                      onClick={() => handleCancelBooking(booking._id)}
+                      onClick={() => setSelectedBookingId(booking._id)}
                       disabled={isCancelled || working}
                       className="rounded-xl border border-red-500/30 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:border-slate-700 disabled:text-slate-500"
                     >
                       {working
                         ? "Cancelling..."
                         : isCancelled
-                        ? "Cancelled"
-                        : "Cancel booking"}
+                          ? "Cancelled"
+                          : "Cancel booking"}
                     </button>
                   </div>
                 </div>
@@ -184,6 +184,19 @@ export default function AdminBookings() {
           })}
         </div>
       )}
+
+      <ConfirmModal
+        open={Boolean(selectedBookingId)}
+        title="Cancel booking?"
+        message="This will cancel the user’s appointment and make the slot available again."
+        confirmText="Cancel booking"
+        loading={Boolean(cancellingId)}
+        onClose={() => setSelectedBookingId(null)}
+        onConfirm={async () => {
+          await handleCancelBooking(selectedBookingId);
+          setSelectedBookingId(null);
+        }}
+      />
     </AppLayout>
   );
 }

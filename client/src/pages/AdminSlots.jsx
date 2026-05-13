@@ -3,12 +3,16 @@ import toast from "react-hot-toast";
 import api from "../api/axios";
 import AppLayout from "../layouts/AppLayout";
 import { formatDateTime } from "../utils/formatDateTime";
+import LoadingState from "../components/LoadingState";
+import EmptyState from "../components/EmptyState";
+import ConfirmModal from "../components/ConfirmModal";
 
 export default function AdminSlots() {
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
   const [actionId, setActionId] = useState(null);
+  const [confirmAction, setConfirmAction] = useState(null);
 
   const [formData, setFormData] = useState({
     serviceName: "",
@@ -40,17 +44,17 @@ export default function AdminSlots() {
   };
 
   const handleCreateSlot = async (e) => {
-      e.preventDefault();
-      
-      if (!formData.serviceName || !formData.startTime || !formData.endTime) {
-        toast.error("Please fill in all fields");
-        return;
-      }
-  
-      if (new Date(formData.endTime) <= new Date(formData.startTime)) {
-        toast.error("End time must be after start time");
-        return;
-      }
+    e.preventDefault();
+
+    if (!formData.serviceName || !formData.startTime || !formData.endTime) {
+      toast.error("Please fill in all fields");
+      return;
+    }
+
+    if (new Date(formData.endTime) <= new Date(formData.startTime)) {
+      toast.error("End time must be after start time");
+      return;
+    }
 
     try {
       setCreating(true);
@@ -174,16 +178,12 @@ export default function AdminSlots() {
           </div>
 
           {loading ? (
-            <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
-              Loading slots...
-            </div>
+            <LoadingState text="Loading slots..." />
           ) : slots.length === 0 ? (
-            <div className="mt-6 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
-              <h3 className="text-lg font-semibold">No slots yet</h3>
-              <p className="mt-2 text-slate-400">
-                Create your first appointment slot.
-              </p>
-            </div>
+            <EmptyState
+              title="No slots yet"
+              message="Create your first appointment slot."
+            />
           ) : (
             <div className="mt-6 space-y-4">
               {slots.map((slot) => {
@@ -220,7 +220,12 @@ export default function AdminSlots() {
 
                     <div className="mt-5 flex flex-wrap gap-3">
                       <button
-                        onClick={() => handleCancelSlot(slot._id)}
+                        onClick={() =>
+                          setConfirmAction({
+                            type: "cancel",
+                            id: slot._id,
+                          })
+                        }
                         disabled={isBooked || isCancelled || working}
                         className="rounded-xl border border-amber-500/30 px-4 py-2 text-sm font-semibold text-amber-400 hover:bg-amber-500/10 disabled:cursor-not-allowed disabled:border-slate-700 disabled:text-slate-500"
                       >
@@ -228,7 +233,12 @@ export default function AdminSlots() {
                       </button>
 
                       <button
-                        onClick={() => handleDeleteSlot(slot._id)}
+                        onClick={() =>
+                          setConfirmAction({
+                            type: "delete",
+                            id: slot._id,
+                          })
+                        }
                         disabled={isBooked || working}
                         className="rounded-xl border border-red-500/30 px-4 py-2 text-sm font-semibold text-red-400 hover:bg-red-500/10 disabled:cursor-not-allowed disabled:border-slate-700 disabled:text-slate-500"
                       >
@@ -242,6 +252,31 @@ export default function AdminSlots() {
           )}
         </section>
       </div>
+      <ConfirmModal
+        open={Boolean(confirmAction)}
+        title={
+          confirmAction?.type === "delete" ? "Delete slot?" : "Cancel slot?"
+        }
+        message={
+          confirmAction?.type === "delete"
+            ? "This will permanently remove the slot."
+            : "This will mark the slot as cancelled."
+        }
+        confirmText={
+          confirmAction?.type === "delete" ? "Delete slot" : "Cancel slot"
+        }
+        loading={Boolean(actionId)}
+        onClose={() => setConfirmAction(null)}
+        onConfirm={async () => {
+          if (confirmAction?.type === "delete") {
+            await handleDeleteSlot(confirmAction.id);
+          } else {
+            await handleCancelSlot(confirmAction.id);
+          }
+
+          setConfirmAction(null);
+        }}
+      />
     </AppLayout>
   );
 }

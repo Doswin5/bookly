@@ -3,6 +3,8 @@ import toast from "react-hot-toast";
 import api from "../api/axios";
 import AppLayout from "../layouts/AppLayout";
 import SlotCard from "../components/SlotCard";
+import LoadingState from "../components/LoadingState";
+import EmptyState from "../components/EmptyState";
 
 export default function Slots() {
   const [slots, setSlots] = useState([]);
@@ -36,7 +38,7 @@ export default function Slots() {
       setBookingSlotId(slotId);
 
       await api.post("/bookings", {
-        slotId
+        slotId,
       });
 
       toast.success("Slot booked successfully");
@@ -72,16 +74,12 @@ export default function Slots() {
       </div>
 
       {loading ? (
-        <div className="mt-10 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center text-slate-400">
-          Loading slots...
-        </div>
+        <LoadingState text="Loading slots..." />
       ) : slots.length === 0 ? (
-        <div className="mt-10 rounded-2xl border border-slate-800 bg-slate-900 p-8 text-center">
-          <h2 className="text-xl font-semibold">No available slots</h2>
-          <p className="mt-2 text-slate-400">
-            Try another date or check back later.
-          </p>
-        </div>
+        <EmptyState
+          title="No available slots"
+          message="Try another date or check back later."
+        />
       ) : (
         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {slots.map((slot) => (
