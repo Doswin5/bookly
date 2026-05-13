@@ -22,18 +22,12 @@ export const createSlot = async (req, res) => {
     }
 
     const { start, end } = validation;
+    const now = new Date();
 
     if (start <= now) {
       return res.status(400).json({
         success: false,
         message: "Slot start time must be in the future.",
-      });
-    }
-
-    if (end <= start) {
-      return res.status(400).json({
-        success: false,
-        message: "End time must be after start time.",
       });
     }
 
@@ -62,6 +56,8 @@ export const createSlot = async (req, res) => {
       slot,
     });
   } catch (error) {
+    console.log("CREATE SLOT ERROR:", error);
+
     return res.status(500).json({
       success: false,
       message: "Failed to create slot.",
