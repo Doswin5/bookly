@@ -4,7 +4,6 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 dotenv.config();
 
-import testRoutes from "./routes/test.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import slotRoutes from "./routes/slot.routes.js";
 import bookingRoutes from "./routes/booking.routes.js";
@@ -14,9 +13,20 @@ import { notFound, errorHandler } from "./middleware/error.middleware.js";
 
 const app = express();
 
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173"
+];
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true
   })
 );
@@ -31,7 +41,6 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-app.use("/api/test", testRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/slots", slotRoutes);
 app.use("/api/bookings", bookingRoutes);
